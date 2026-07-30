@@ -32,10 +32,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install dbt-snowflake
 
+      - name: Copy Profile to Default Path
+        run: |
+          mkdir -p ~/.dbt
+          cp ci_profiles.yml ~/.dbt/profiles.yml
+
       - name: Install dbt Dependencies
         run: |
-          dbt deps --profiles-dir . --profile your_dbt_project
+          dbt deps --profile my_new_project
 
       - name: Execute dbt Build in UAT Target
         run: |
-          dbt build --profiles-dir . --profile your_dbt_project --target uat
+          dbt build --profile my_new_project --target uat
