@@ -26,7 +26,7 @@ with
             coalesce(customer_orders.number_of_orders, 0) as number_of_orders,
             customer_orders.first_order_date,
             customer_orders.most_recent_order_date,
-            coalesce(customer_orders.lifetime_value, 0) as lifetime_value
+            coalesce(customer_orders.lifetime_value, 0) as lifetime_value_dollars
         from customers
         left join nations on customers.nation_id = nations.nation_id
         left join customer_orders on customers.customer_id = customer_orders.customer_id
