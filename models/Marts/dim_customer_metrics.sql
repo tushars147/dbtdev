@@ -27,9 +27,9 @@ final as (
         c.account_balance,
         ca.first_order_date,
         ca.most_recent_order_date,
-        coalesce(ca.total_orders, 0) as total_orders,
-        coalesce(ca.lifetime_value, 0) as lifetime_value,
-        coalesce(ca.avg_order_value, 0) as avg_order_value
+        coalesce(ca.total_orders, 0) as total_orders_CUSTOMERS,
+        coalesce(ca.lifetime_value, 0) as lifetime_value_DOLLARS,
+        coalesce(ca.avg_order_value, 0) as avg_order_value_DOLLARS
     from customers c
     left join customer_aggregations ca
         on c.customer_id = ca.customer_id
