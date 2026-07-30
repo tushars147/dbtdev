@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: tpch
+    database: RAW_SANDBOX
+    schema: TPCH_SF1
+    tables:
+      - name: raw_customers
+      - name: raw_orders
+      - name: raw_lineitem
+      - name: raw_nation
+      - name: raw_region
