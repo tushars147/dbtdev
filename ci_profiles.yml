@@ -1,0 +1,14 @@
+# Replace 'your_dbt_project' with the exact name field in your dbt_project.yml
+my_new_project:
+  target: uat
+  outputs:
+    uat:
+      type: snowflake
+      account: "{{ env_var('DBT_SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('DBT_SNOWFLAKE_USER') }}"
+      password: "{{ env_var('DBT_SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('DBT_SNOWFLAKE_ROLE') }}"
+      warehouse: "{{ env_var('DBT_SNOWFLAKE_WAREHOUSE') }}"
+      database: "{{ env_var('DBT_SNOWFLAKE_UAT_DATABASE') }}"
+      schema: uat_mart
+      threads: 4
