@@ -21,10 +21,10 @@ customer_aggregations as (
 
 final as (
     select
-        c.customer_id,
-        c.customer_name,
+        c.customer_id as CUSTOMER_KEY,
+        c.customer_name as FULL_NAME,
         c.market_segment,
-        c.account_balance,
+        c.account_balance as BANK_BALANCE,
         ca.first_order_date,
         ca.most_recent_order_date,
         coalesce(ca.total_orders, 0) as total_orders_CUSTOMERS,

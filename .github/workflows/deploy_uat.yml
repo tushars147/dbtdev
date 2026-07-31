@@ -1,46 +1,73 @@
-name: Deploy dbt to UAT Environment
+name: dbt CI Pipeline
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    paths:
+      - 'models/**'
+      - 'macros/**'
+      - 'tests/**'
+      - 'dbt_project.yml'
 
 jobs:
-  deploy_to_uat:
-    name: Build & Test in UAT
+  run-ci:
+    name: Lint & Build dbt Models
     runs-on: ubuntu-latest
 
     env:
-      DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      DBT_SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-      DBT_SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      DBT_SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-      DBT_SNOWFLAKE_UAT_DATABASE: ${{ secrets.SNOWFLAKE_UAT_DATABASE }}
+      DBT_SNOWFLAKE_USER: ${{ secrets.DBT_SNOWFLAKE_USER }}
+      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
+      DBT_PROFILES_DIR: ./.github
 
     steps:
-      - name: Checkout Repository Code
+      # 1. Checkout the PR branch
+      - name: Checkout PR Branch
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      # 2. Set up Python environment
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install dbt Snowflake adapter
+      # 3. Install dbt, SQLFluff, and adapters
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install dbt-snowflake
+          pip install dbt-snowflake sqlfluff sqlfluff-templater-dbt
 
-      - name: Copy Profile to Default Path
+      # -------------------------------------------------------------
+      # STAGE 1: SQL LINTING (Fast Fail)
+      # -------------------------------------------------------------
+      - name: Run SQL Fluff Linting
         run: |
-          mkdir -p ~/.dbt
-          cp ci_profiles.yml ~/.dbt/profiles.yml
+          sqlfluff lint models/
 
-      - name: Install dbt Dependencies
-        run: |
-          dbt deps --profile my_new_project
+      # -------------------------------------------------------------
+      # STAGE 2: DOWNLOAD STATE (For Slim CI)
+      # -------------------------------------------------------------
+      - name: Download Production Manifest
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          branch: main
+          workflow: prod_deploy.yml
+          name: prod-manifest
+          path: ./state
+        continue-on-error: true
 
-      - name: Execute dbt Build in UAT Target
+      # -------------------------------------------------------------
+      # STAGE 3: DBT BUILD (Slim CI)
+      # -------------------------------------------------------------
+      - name: Install dbt Packages
+        run: dbt deps
+
+      - name: Run dbt Build (Modified Models + Tests)
         run: |
-          dbt build --profile my_new_project --target uat
+          if [ -f "./state/manifest.json" ]; then
+            echo "Production manifest found. Running Slim CI on modified models..."
+            dbt build --select state:modified+ --state ./state
+          else
+            echo "No production manifest found. Running full build..."
+            dbt build
+          fi
