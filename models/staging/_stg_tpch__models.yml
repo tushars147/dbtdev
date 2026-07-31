@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_tpch__customers
+    description: "Staged customer dimension table"
+    columns:
+      - name: customer_id
+        description: "Primary key for customer"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: market_segment
+        description: "Customer market classification"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['BUILDING', 'AUTOMOBILE', 'MACHINERY', 'HOUSEHOLD', 'FURNITURE']
+
+  - name: stg_tpch__orders
+    description: "Staged order fact table"
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch__customers')
+                field: customer_id
+
+      - name: total_price
+        data_tests:
+          - not_null
